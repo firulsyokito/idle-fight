@@ -6880,14 +6880,46 @@ const MarketEngine = {
     }
   },
 
-  loadStandaloneMarket() {
+  async loadStandaloneMarket() {
     this.fetchRules();
     const now = Date.now();
-    let raw = localStorage.getItem('idle_standalone_market');
     let listings = [];
-    if (raw) {
-      try { listings = JSON.parse(raw); } catch (e) { listings = []; }
-    }
+
+    // 1. Coba baca data listing global dari file statis data/market.json (GitHub Pages)
+    try {
+      const paths = ['data/market.json', './data/market.json', '/idle-fight/data/market.json'];
+      for (const p of paths) {
+        try {
+          const res = await fetch(p);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.listings)) {
+              listings = data.listings;
+              break;
+            }
+          }
+        } catch (e) {}
+      }
+    } catch (e) {}
+
+    // 2. Gabungkan dengan barang yang dipasang pemain di browser lokal ini
+    let localListings = [];
+    try {
+      const raw = localStorage.getItem('idle_standalone_market');
+      if (raw) localListings = JSON.parse(raw);
+    } catch (e) {}
+
+    const listingMap = new Map();
+    // Masukkan data listing statis
+    listings.forEach(l => {
+      if (l && l.listingId) listingMap.set(l.listingId, l);
+    });
+    // Masukkan/timpa dengan listing lokal milik pemain
+    localListings.forEach(l => {
+      if (l && l.listingId) listingMap.set(l.listingId, l);
+    });
+
+    listings = Array.from(listingMap.values());
 
     if (!listings || listings.length === 0) {
       // Inisialisasi awal beberapa barang di bursa agar pasar terasa ramai
