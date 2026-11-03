@@ -70,7 +70,7 @@ body {
 
 @media (max-width: 860px) {
   :root {
-    font-size: 10px; /* Perkecil skala basis UI & teks sekitar 50% untuk layar Android/Mobile */
+    font-size: 11px; /* Skala proporsional untuk mobile browser */
   }
 
   body {
@@ -81,109 +81,61 @@ body {
   }
 
   .game-viewport {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
   }
 
-  /* ARENA PERTARUNGAN DI BAGIAN ATAS UNTUK ANDROID PORTRAIT */
+  /* 1. ARENA PERTARUNGAN DI POSISI PALING ATAS */
   .arena-right-container {
-    height: 36vh;
-    min-height: 190px;
-    max-height: 280px;
-    flex-shrink: 0;
-    border-bottom: 2px solid var(--border-color);
-    position: relative;
+    order: 1 !important;
+    height: 38vh !important;
+    min-height: 200px !important;
+    max-height: 320px !important;
+    flex-shrink: 0 !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    position: relative !important;
   }
 
-  .arena-top-hud {
-    top: 0.25rem;
-    left: 0.25rem;
-    right: 0.25rem;
-    gap: 0.25rem;
-  }
-
-  .hud-box {
-    padding: 0.15rem 0.35rem;
-    gap: 0.25rem;
-  }
-
-  .hud-wave-text {
-    font-size: 0.75rem;
-  }
-
-  .hud-record-tag, .hud-drop-rate-tag {
-    font-size: 0.5rem;
-    padding: 0.05rem 0.2rem;
-  }
-
-  .hud-gold-text {
-    font-size: 0.75rem;
-  }
-
-  .btn-collect-loot, .btn-fullscreen-toggle {
-    padding: 0.18rem 0.35rem;
-    font-size: 0.58rem;
-  }
-
-  .arena-bottom-hud {
-    bottom: 0.25rem;
-    left: 0.25rem;
-    right: 0.25rem;
-    gap: 0.2rem;
-  }
-
-  .hp-bar-container {
-    padding: 0.2rem 0.4rem;
-    border-radius: 6px;
-  }
-
-  .hp-bar-label {
-    font-size: 0.55rem;
-  }
-
-  .hp-bar-values {
-    font-size: 0.55rem;
-  }
-
-  .hp-bar-track {
-    height: 6px;
-  }
-
-  .arena-combat-ticker {
-    max-width: 100%;
-    padding: 0.15rem 0.35rem;
-    font-size: 0.52rem;
-  }
-
-  /* PANEL KONTEN & MENU BAWAH DI ANDROID */
+  /* 2. PANEL UTAMA DI POSISI KEDUA (BAWAH ARENA) */
   .panel-left-container {
-    flex: 1;
-    height: auto;
-    border-right: none;
-    flex-direction: column-reverse; /* Menu sidebar PC berpindah ke bilah menu bawah di Android */
-    overflow: hidden;
-    min-height: 0;
-    background: var(--bg-panel);
+    order: 2 !important;
+    flex: 1 1 0% !important;
+    height: auto !important;
+    border-right: none !important;
+    display: flex !important;
+    flex-direction: column !important; /* Content di atas, bilah menu di paling bawah */
+    overflow: hidden !important;
+    min-height: 0 !important;
+    background: var(--bg-panel) !important;
   }
 
-  /* BILAH MENU DI BAWAH UNTUK ANDROID (POTRAIT BOTTOM MENU) */
+  /* KONTEN (TAS / SHOP) DAPAT DI-SCROLL */
+  .panel-main-content {
+    order: 1 !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 3. BILAH MENU DI PALING BAWAH (BOTTOM NAVIGATION BAR) */
   .panel-nav-sidebar {
-    width: 100%;
-    height: 48px;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    border-right: none;
-    border-top: 1px solid var(--border-color);
-    padding: 0.15rem 0.35rem;
-    background: var(--bg-sidebar);
-    z-index: 50;
-    flex-shrink: 0;
+    order: 2 !important;
+    width: 100% !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    border-right: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding: 0.2rem 0.5rem !important;
+    background: var(--bg-sidebar) !important;
+    z-index: 50 !important;
+    flex-shrink: 0 !important;
   }
 
   .sidebar-header-brand {
@@ -6470,9 +6422,6 @@ const GameEngine = {
         </div>
       `;
     });
-
-    listEl.innerHTML = html;
-  },
 
     listEl.innerHTML = html;
   },
