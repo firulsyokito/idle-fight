@@ -1,0 +1,219 @@
+{
+  "listings": [
+    {
+      "listingId": "list_sample_1",
+      "sellerId": "npc_elder_alchemist",
+      "sellerName": "Elder Alchemist",
+      "item": {
+        "id": "item_sample_1",
+        "templateId": "dragon_ring",
+        "name": "Cincin Naga",
+        "slot": "accessory",
+        "stat": "critRate",
+        "statVal": 9,
+        "unit": "%",
+        "desc": "+Crit Rate",
+        "icon": "💍",
+        "rarity": "uncommon",
+        "npcSellPrice": 75
+      },
+      "price": 120,
+      "createdAt": 1730460000000,
+      "releaseAt": 1730460000000,
+      "sold": false,
+      "soldTo": null,
+      "soldAt": null
+    },
+    {
+      "listingId": "list_sample_2",
+      "sellerId": "npc_shadow_thief",
+      "sellerName": "Rogue Shadow",
+      "item": {
+        "id": "item_sample_2",
+        "templateId": "berserker_axe",
+        "name": "Kapak Mengamuk",
+        "slot": "weapon",
+        "stat": "critDmg",
+        "statVal": 70,
+        "unit": "%",
+        "desc": "+Crit Damage",
+        "icon": "🪓",
+        "rarity": "rare",
+        "npcSellPrice": 320
+      },
+      "price": 450,
+      "createdAt": 1730460000000,
+      "releaseAt": 1730460000000,
+      "sold": true,
+      "soldTo": {
+        "buyerId": "hero_m4a218l",
+        "buyerName": "Hero_588"
+      },
+      "soldAt": 1793699029511
+    },
+    {
+      "listingId": "list_sample_3",
+      "sellerId": "npc_high_priest",
+      "sellerName": "High Priest",
+      "item": {
+        "id": "item_sample_3",
+        "templateId": "giant_shield",
+        "name": "Perisai Raksasa",
+        "slot": "shield",
+        "stat": "maxHp",
+        "statVal": 35,
+        "unit": "",
+        "desc": "+Max HP Flat",
+        "icon": "🛡️",
+        "rarity": "common",
+        "npcSellPrice": 15
+      },
+      "price": 30,
+      "createdAt": 1730460000000,
+      "releaseAt": 1730460000000,
+      "sold": true,
+      "soldTo": {
+        "buyerId": "test_player_2",
+        "buyerName": "Buyer"
+      },
+      "soldAt": 1793540802134
+    },
+    {
+      "listingId": "list_1793540802117_uwa2k2",
+      "sellerId": "test_player_1",
+      "sellerName": "Tester",
+      "item": {
+        "id": "item_epic_test",
+        "name": "Pedang Api Mistis",
+        "icon": "🗡️",
+        "stat": "atk",
+        "unit": "",
+        "desc": "+ATK Flat",
+        "rarity": "epic",
+        "statVal": 42
+      },
+      "price": 2500,
+      "createdAt": 1793540802117,
+      "releaseAt": 1793542602117,
+      "sold": true,
+      "soldTo": {
+        "buyerId": "hero_m4a218l",
+        "buyerName": "Hero_588"
+      },
+      "soldAt": 1793702507438
+    },
+    {
+      "listingId": "list_1793540972622_jomzab",
+      "sellerId": "hero_xp0e89p",
+      "sellerName": "Hero_527",
+      "item": {
+        "id": "item_1793540914947_pk160",
+        "templateId": "giant_shield",
+        "name": "Perisai Raksasa",
+        "slot": "shield",
+        "stat": "maxHp",
+        "statVal": 123,
+        "unit": "",
+        "desc": "+Max HP Flat",
+        "icon": "🛡️",
+        "rarity": "rare",
+        "npcSellPrice": 287
+      },
+      "price": 725,
+      "createdAt": 1793540972622,
+      "releaseAt": 1793542772622,
+      "sold": false,
+      "soldTo": null,
+      "soldAt": null
+    },
+    {
+      "listingId": "list_1793699043216_a7ujwa",
+      "sellerId": "hero_m4a218l",
+      "sellerName": "Hero_588",
+      "item": {
+        "id": "item_1793698802826_5ca1b",
+        "templateId": "wooden_stick",
+        "name": "Tongkat Kayu Lapuk",
+        "slot": "weapon",
+        "stat": "atk",
+        "statVal": 4,
+        "unit": "",
+        "desc": "+ATK Flat",
+        "icon": "🪵",
+        "rarity": "uncommon",
+        "npcSellPrice": 71,
+        "legendaryEffect": null,
+        "legendaryVfx": null,
+        "legendaryDesc": null
+      },
+      "price": 200,
+      "createdAt": 1793699043216,
+      "releaseAt": 1793700843216,
+      "sold": false,
+      "soldTo": null,
+      "soldAt": null
+    }
+  ],
+  "transactions": [
+    {
+      "txId": "tx_1793540802134",
+      "listingId": "list_sample_3",
+      "sellerId": "npc_high_priest",
+      "buyerId": "test_player_2",
+      "price": 30,
+      "item": {
+        "id": "item_sample_3",
+        "templateId": "giant_shield",
+        "name": "Perisai Raksasa",
+        "slot": "shield",
+        "stat": "maxHp",
+        "statVal": 35,
+        "unit": "",
+        "desc": "+Max HP Flat",
+        "icon": "🛡️",
+        "rarity": "common",
+        "npcSellPrice": 15
+      },
+      "timestamp": 1793540802134
+    },
+    {
+      "txId": "tx_1793699029511",
+      "listingId": "list_sample_2",
+      "sellerId": "npc_shadow_thief",
+      "buyerId": "hero_m4a218l",
+      "price": 450,
+      "item": {
+        "id": "item_sample_2",
+        "templateId": "berserker_axe",
+        "name": "Kapak Mengamuk",
+        "slot": "weapon",
+        "stat": "critDmg",
+        "statVal": 70,
+        "unit": "%",
+        "desc": "+Crit Damage",
+        "icon": "🪓",
+        "rarity": "rare",
+        "npcSellPrice": 320
+      },
+      "timestamp": 1793699029511
+    },
+    {
+      "txId": "tx_1793702507438",
+      "listingId": "list_1793540802117_uwa2k2",
+      "sellerId": "test_player_1",
+      "buyerId": "hero_m4a218l",
+      "price": 2500,
+      "item": {
+        "id": "item_epic_test",
+        "name": "Pedang Api Mistis",
+        "icon": "🗡️",
+        "stat": "atk",
+        "unit": "",
+        "desc": "+ATK Flat",
+        "rarity": "epic",
+        "statVal": 42
+      },
+      "timestamp": 1793702507438
+    }
+  ]
+}

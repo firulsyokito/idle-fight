@@ -1,0 +1,152 @@
+{
+  "players": {
+    "hero_m4a218l": {
+      "id": "hero_m4a218l",
+      "name": "jokowi",
+      "gold": 326495,
+      "wave": 79,
+      "highestWaveReached": 78,
+      "lastDeathWave": null,
+      "equipped": {
+        "weapon": {
+          "id": "item_1793705846469_6h1g9",
+          "templateId": "warrior_sword",
+          "name": "Pedang Prajurit",
+          "slot": "weapon",
+          "stat": "atk",
+          "statVal": 420,
+          "unit": "",
+          "desc": "+ATK Flat",
+          "icon": "🗡️",
+          "rarity": "epic",
+          "npcSellPrice": 2200
+        },
+        "armor": {
+          "id": "item_1793698831571_t6nnw",
+          "templateId": "soul_robe",
+          "name": "Jubah Jiwa Abadi",
+          "slot": "armor",
+          "stat": "damageReduction",
+          "statVal": 80,
+          "unit": "%",
+          "desc": "+DR + Perisai Jiwa",
+          "icon": "👻",
+          "rarity": "legendary",
+          "npcSellPrice": 8105,
+          "legendaryEffect": "soulShield",
+          "legendaryVfx": "soulBubble",
+          "legendaryDesc": "Setiap wave baru: absorb 1 serangan secara penuh (Perisai Jiwa)"
+        },
+        "shield": {
+          "id": "item_1793702256938_uichg",
+          "templateId": "wooden_buckler",
+          "name": "Tameng Kayu",
+          "slot": "shield",
+          "stat": "maxHp",
+          "statVal": 12,
+          "unit": "",
+          "desc": "+Max HP",
+          "icon": "🛡",
+          "rarity": "common",
+          "npcSellPrice": 14,
+          "legendaryEffect": null,
+          "legendaryVfx": null,
+          "legendaryDesc": null
+        },
+        "boots": {
+          "id": "item_1793698881988_hf1ej",
+          "templateId": "worn_sandals",
+          "name": "Sandal Usang",
+          "slot": "boots",
+          "stat": "atkSpeed",
+          "statVal": 0.35,
+          "unit": "x",
+          "desc": "+Atk Speed",
+          "icon": "🩴",
+          "rarity": "epic",
+          "npcSellPrice": 1309,
+          "legendaryEffect": null,
+          "legendaryVfx": null,
+          "legendaryDesc": null
+        },
+        "accessory": {
+          "id": "item_1793699166135_1gg72",
+          "templateId": "demon_blood_ring",
+          "name": "Cincin Darah Iblis",
+          "slot": "accessory",
+          "stat": "lifesteal",
+          "statVal": 128,
+          "unit": "%",
+          "desc": "+Lifesteal + Ledakan Darah",
+          "icon": "🩸",
+          "rarity": "legendary",
+          "npcSellPrice": 7680,
+          "legendaryEffect": "vampiricBurst",
+          "legendaryVfx": "bloodNova",
+          "legendaryDesc": "Tiap 5 musuh tewas: sembuhkan 30% Max HP (Blood Nova meledak)"
+        },
+        "special": {
+          "id": "item_1793698820526_e9p88",
+          "templateId": "coin_purse",
+          "name": "Dompet Koin",
+          "slot": "special",
+          "stat": "goldBonus",
+          "statVal": 6,
+          "unit": "%",
+          "desc": "+Gold Bonus",
+          "icon": "💰",
+          "rarity": "common",
+          "npcSellPrice": 15,
+          "legendaryEffect": null,
+          "legendaryVfx": null,
+          "legendaryDesc": null
+        },
+        "undefined": {
+          "id": "item_epic_test",
+          "name": "Pedang Api Mistis",
+          "icon": "🗡️",
+          "stat": "atk",
+          "unit": "",
+          "desc": "+ATK Flat",
+          "rarity": "epic",
+          "statVal": 42
+        }
+      },
+      "inventory": [
+        {
+          "id": "item_1793702551863_7731b",
+          "templateId": "war_hammer",
+          "name": "Palu Perang Penghancur",
+          "slot": "weapon",
+          "stat": "critDmg",
+          "statVal": 28,
+          "unit": "%",
+          "desc": "+Crit Damage",
+          "icon": "🔨",
+          "rarity": "common",
+          "npcSellPrice": 15,
+          "legendaryEffect": null,
+          "legendaryVfx": null,
+          "legendaryDesc": null
+        },
+        {
+          "id": "item_1793705861148_wsc0g",
+          "templateId": "iron_kite_shield",
+          "name": "Perisai Layang Besi",
+          "slot": "shield",
+          "stat": "maxHp",
+          "statVal": 25,
+          "unit": "",
+          "desc": "+Max HP",
+          "icon": "🛡",
+          "rarity": "common",
+          "npcSellPrice": 15,
+          "legendaryEffect": null,
+          "legendaryVfx": null,
+          "legendaryDesc": null
+        }
+      ],
+      "updatedAt": 1793706754189
+    }
+  }
+}

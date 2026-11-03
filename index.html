@@ -6347,61 +6347,124 @@ const GameEngine = {
 
     listEl.innerHTML = '<div class="leaderboard-loading">Memuat peringkat dari server...</div>';
 
+    // 1. Coba ambil dari server API lokal (jika node server berjalan)
     try {
       const res = await fetch('/api/leaderboard');
-      if (!res.ok) throw new Error('Gagal memuat papan peringkat');
-      const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        if (data.leaderboard && data.leaderboard.length > 0) {
+          this.renderLeaderboardRows(listEl, totalEl, data.leaderboard, data.totalPlayers || data.leaderboard.length);
+          return;
+        }
+      }
+    } catch (e) {}
 
-      if (totalEl) totalEl.innerText = `${data.totalPlayers || 0} Pahlawan Terdaftar`;
-
-      if (!data.leaderboard || data.leaderboard.length === 0) {
-        listEl.innerHTML = '<div class="leaderboard-loading">Belum ada data pahlawan di server.</div>';
-        return;
+    // 2. Coba ambil dari data statis data/players.json (GitHub Pages / Standalone)
+    try {
+      const paths = ['data/players.json', './data/players.json', '/idle-fight/data/players.json'];
+      let staticData = null;
+      for (const p of paths) {
+        try {
+          const res = await fetch(p);
+          if (res.ok) {
+            staticData = await res.json();
+            break;
+          }
+        } catch (err) {}
       }
 
-      let html = '';
-      data.leaderboard.forEach((player) => {
-        const isMe = player.id === GameState.player.id;
-        let rankBadgeClass = '';
-        let rankDisplay = `#${player.rank}`;
+      if (staticData && staticData.players) {
+        const list = Object.values(staticData.players).map(p => {
+          const equippedList = Object.values(p.equipped || {}).filter(Boolean);
+          const legendaryCount = equippedList.filter(eq => eq.rarity === 'legendary').length;
+          return {
+            id: p.id,
+            name: p.name || 'Hero',
+            wave: typeof p.wave === 'number' ? p.wave : 1,
+            highestWaveReached: typeof p.highestWaveReached === 'number' ? p.highestWaveReached : (p.wave || 1),
+            gold: typeof p.gold === 'number' ? p.gold : 0,
+            legendaryCount
+          };
+        });
 
-        if (player.rank === 1) {
-          rankBadgeClass = 'rank-1';
-          rankDisplay = '🥇 1';
-        } else if (player.rank === 2) {
-          rankBadgeClass = 'rank-2';
-          rankDisplay = '🥈 2';
-        } else if (player.rank === 3) {
-          rankBadgeClass = 'rank-3';
-          rankDisplay = '🥉 3';
+        // Gabungkan dengan karakter saat ini jika belum ada di snapshot
+        const exists = list.some(x => x.id === GameState.player.id);
+        if (!exists) {
+          const currentHero = {
+            id: GameState.player.id,
+            name: GameState.player.name,
+            wave: GameState.player.wave,
+            highestWaveReached: GameState.player.highestWaveReached || GameState.player.wave,
+            gold: GameState.player.gold,
+            legendaryCount: Object.values(GameState.player.equipped || {}).filter(eq => eq && eq.rarity === 'legendary').length
+          };
+          list.push(currentHero);
         }
 
-        const legBadge = player.legendaryCount > 0
-          ? `<span class="leg-gear-badge" title="${player.legendaryCount} Item Legendary">✨ ${player.legendaryCount} Leg</span>`
-          : '';
+        list.sort((a, b) => {
+          if (b.highestWaveReached !== a.highestWaveReached) return b.highestWaveReached - a.highestWaveReached;
+          if (b.wave !== a.wave) return b.wave - a.wave;
+          return b.gold - a.gold;
+        });
 
-        html += `
-          <div class="leaderboard-row ${isMe ? 'is-me' : ''}">
-            <div class="rank-col ${rankBadgeClass}">${rankDisplay}</div>
-            <div class="name-col">
-              <span class="player-rank-name">${this.escapeHtml(player.name)}</span>
-              ${isMe ? '<span class="you-tag">(Anda)</span>' : ''}
-              ${legBadge}
-            </div>
-            <div class="wave-col">
-              <span class="wave-record-badge">Wave ${player.highestWaveReached}</span>
-            </div>
-            <div class="curwave-col">Wave ${player.wave}</div>
-            <div class="gold-col">💰 ${(player.gold || 0).toLocaleString('id-ID')}</div>
-          </div>
-        `;
-      });
+        const formatted = list.map((item, idx) => ({ rank: idx + 1, ...item }));
+        this.renderLeaderboardRows(listEl, totalEl, formatted, list.length);
+        return;
+      }
+    } catch (e) {}
 
-      listEl.innerHTML = html;
-    } catch (err) {
-      // Standalone / Google Sites Mode: Tampilkan simulasi leaderboard pahlawan global
-      this.renderStandaloneLeaderboard(listEl, totalEl);
+    // 3. Fallback: Standalone LocalStorage Leaderboard
+    this.renderStandaloneLeaderboard(listEl, totalEl);
+  },
+
+  renderLeaderboardRows(listEl, totalEl, playerList, totalCount) {
+    if (!listEl) return;
+    if (totalEl) totalEl.innerText = `${totalCount || playerList.length} Pahlawan Terdaftar`;
+
+    if (!playerList || playerList.length === 0) {
+      listEl.innerHTML = '<div class="leaderboard-loading">Belum ada data pahlawan di server.</div>';
+      return;
     }
+
+    let html = '';
+    playerList.forEach((player) => {
+      const isMe = player.id === GameState.player.id;
+      let rankBadgeClass = '';
+      let rankDisplay = `#${player.rank}`;
+
+      if (player.rank === 1) {
+        rankBadgeClass = 'rank-1';
+        rankDisplay = '🥇 1';
+      } else if (player.rank === 2) {
+        rankBadgeClass = 'rank-2';
+        rankDisplay = '🥈 2';
+      } else if (player.rank === 3) {
+        rankBadgeClass = 'rank-3';
+        rankDisplay = '🥉 3';
+      }
+
+      const legBadge = player.legendaryCount > 0
+        ? `<span class="leg-gear-badge" title="${player.legendaryCount} Item Legendary">✨ ${player.legendaryCount} Leg</span>`
+        : '';
+
+      html += `
+        <div class="leaderboard-row ${isMe ? 'is-me' : ''}">
+          <div class="rank-col ${rankBadgeClass}">${rankDisplay}</div>
+          <div class="name-col">
+            <span class="player-rank-name">${this.escapeHtml(player.name)}</span>
+            ${isMe ? '<span class="you-tag">(Anda)</span>' : ''}
+            ${legBadge}
+          </div>
+          <div class="wave-col">
+            <span class="wave-record-badge">Wave ${player.highestWaveReached}</span>
+          </div>
+          <div class="curwave-col">Wave ${player.wave}</div>
+          <div class="gold-col">💰 ${(player.gold || 0).toLocaleString('id-ID')}</div>
+        </div>
+      `;
+    });
+
+    listEl.innerHTML = html;
   },
 
   renderStandaloneLeaderboard(listEl, totalEl) {
