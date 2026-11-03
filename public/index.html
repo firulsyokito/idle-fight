@@ -443,18 +443,25 @@
   <script src="js/GameEngine.js"></script>
   <script src="js/MarketEngine.js"></script>
   <script>
-    window.addEventListener('DOMContentLoaded', async () => {
+    async function initIdleFightApp() {
+      if (window.__idleFightAppInitialized) return;
+      window.__idleFightAppInitialized = true;
+
       // 1. Inisialisasi GameEngine & RenderEngine
       GameEngine.init();
 
       // 2. Inisialisasi MarketEngine
-      await MarketEngine.init();
+      try {
+        await MarketEngine.init();
+      } catch (err) {
+        console.warn('MarketEngine init warning:', err);
+      }
 
       // 3. Set Info Pemain
       const profileNameEl = document.getElementById('profile-name');
       const profileIdEl = document.getElementById('profile-id');
-      if (profileNameEl) profileNameEl.innerText = GameState.player.name;
-      if (profileIdEl) profileIdEl.innerText = `ID: ${GameState.player.id}`;
+      if (profileNameEl && GameState && GameState.player) profileNameEl.innerText = GameState.player.name;
+      if (profileIdEl && GameState && GameState.player) profileIdEl.innerText = `ID: ${GameState.player.id}`;
 
       // 4. Panel Navigation Switcher Logic (Shop vs Tas)
       const btnShop = document.getElementById('btn-nav-shop');
@@ -467,21 +474,28 @@
       const marketOverlay = document.getElementById('market-items-overlay');
 
       function toggleMarketItemsOverlay(forceOpen) {
+        if (!marketOverlay) return;
         const isOpen = forceOpen !== undefined ? forceOpen : !marketOverlay.classList.contains('active');
         if (isOpen) {
           marketOverlay.classList.add('active');
           if (btnToggleMarketItems) {
             btnToggleMarketItems.classList.add('active');
-            btnToggleMarketItems.querySelector('.purple-text').innerText = 'Tutup Item Pasar';
-            btnToggleMarketItems.querySelector('.purple-arrow').innerText = '◀';
+            const pt = btnToggleMarketItems.querySelector('.purple-text');
+            const pa = btnToggleMarketItems.querySelector('.purple-arrow');
+            if (pt) pt.innerText = 'Tutup Item Pasar';
+            if (pa) pa.innerText = '◀';
           }
-          MarketEngine.refreshListings();
+          if (window.MarketEngine && MarketEngine.refreshListings) {
+            MarketEngine.refreshListings();
+          }
         } else {
           marketOverlay.classList.remove('active');
           if (btnToggleMarketItems) {
             btnToggleMarketItems.classList.remove('active');
-            btnToggleMarketItems.querySelector('.purple-text').innerText = 'Lihat Item Pasar Global';
-            btnToggleMarketItems.querySelector('.purple-arrow').innerText = '➔';
+            const pt = btnToggleMarketItems.querySelector('.purple-text');
+            const pa = btnToggleMarketItems.querySelector('.purple-arrow');
+            if (pt) pt.innerText = 'Lihat Item Pasar Global';
+            if (pa) pa.innerText = '➔';
           }
         }
       }
@@ -491,16 +505,18 @@
 
       function switchPanelView(view) {
         if (view === 'shop') {
-          btnShop.classList.add('active');
-          btnBag.classList.remove('active');
-          viewShop.classList.add('active');
-          viewInventory.classList.remove('active');
-          MarketEngine.refreshListings();
+          if (btnShop) btnShop.classList.add('active');
+          if (btnBag) btnBag.classList.remove('active');
+          if (viewShop) viewShop.classList.add('active');
+          if (viewInventory) viewInventory.classList.remove('active');
+          if (window.MarketEngine && MarketEngine.refreshListings) {
+            MarketEngine.refreshListings();
+          }
         } else {
-          btnBag.classList.add('active');
-          btnShop.classList.remove('active');
-          viewInventory.classList.add('active');
-          viewShop.classList.remove('active');
+          if (btnBag) btnBag.classList.add('active');
+          if (btnShop) btnShop.classList.remove('active');
+          if (viewInventory) viewInventory.classList.add('active');
+          if (viewShop) viewShop.classList.remove('active');
           toggleMarketItemsOverlay(false); // Tutup pasar saat membuka tas
         }
       }
@@ -680,7 +696,13 @@
 
       window.switchPanelView = switchPanelView;
       window.toggleMarketItemsOverlay = toggleMarketItemsOverlay;
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initIdleFightApp);
+    } else {
+      initIdleFightApp();
+    }
   </script>
 </body>
 </html>
