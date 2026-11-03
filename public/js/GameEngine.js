@@ -1929,52 +1929,88 @@ const GameEngine = {
     }
     const cleanId = targetId.trim();
 
+    // 1. Coba hubungi server backend (jika bermain via localhost / LAN)
     try {
       const res = await fetch('/api/player/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: cleanId, name: targetName })
       });
-      const data = await res.json();
-      if (!res.ok) {
-        this.showToast(data.error || 'Gagal masuk akun', 'error');
-        return false;
+      if (res.ok) {
+        const data = await res.json();
+        const p = data.player;
+        this.applyLoadedPlayer(p);
+        return true;
+      }
+    } catch (err) {
+      // Fallback untuk GitHub Pages / Standalone mode
+    }
+
+    // 2. Fallback GitHub Pages: cari di snapshot file statis data/players.json
+    try {
+      const paths = ['data/players.json', './data/players.json', '/idle-fight/data/players.json'];
+      let staticDb = null;
+      for (const p of paths) {
+        try {
+          const res = await fetch(p);
+          if (res.ok) {
+            staticDb = await res.json();
+            break;
+          }
+        } catch (e) {}
       }
 
-      const p = data.player;
-      GameState.player.id = p.id;
-      GameState.player.name = p.name;
-      GameState.player.gold = p.gold;
-      GameState.player.wave = p.wave;
-      GameState.player.highestWaveReached = p.highestWaveReached || 1;
-      GameState.player.lastDeathWave = p.lastDeathWave;
-      GameState.player.equipped = p.equipped || {};
-      GameState.player.inventory = p.inventory || [];
+      if (staticDb && staticDb.players && staticDb.players[cleanId]) {
+        const p = staticDb.players[cleanId];
+        this.applyLoadedPlayer(p);
+        return true;
+      }
+    } catch (err) {}
 
-      localStorage.setItem('idle_player_id', p.id);
-      localStorage.setItem('idle_player_name', p.name);
-      this.saveGame();
+    // 3. Jika ID baru di GitHub Pages, buat karakter lokal dengan ID & Nama tersebut
+    const fallbackPlayer = {
+      id: cleanId,
+      name: targetName || cleanId,
+      gold: 150,
+      wave: 1,
+      highestWaveReached: 1,
+      lastDeathWave: null,
+      equipped: {},
+      inventory: []
+    };
+    this.applyLoadedPlayer(fallbackPlayer);
+    return true;
+  },
 
-      // Update UI Header
-      const profileNameEl = document.getElementById('profile-name');
-      const profileIdEl = document.getElementById('profile-id');
-      if (profileNameEl) profileNameEl.innerText = p.name;
-      if (profileIdEl) profileIdEl.innerText = `ID: ${p.id}`;
+  applyLoadedPlayer(p) {
+    GameState.player.id = p.id;
+    GameState.player.name = p.name || 'Hero';
+    GameState.player.gold = typeof p.gold === 'number' ? p.gold : 150;
+    GameState.player.wave = typeof p.wave === 'number' ? p.wave : 1;
+    GameState.player.highestWaveReached = typeof p.highestWaveReached === 'number' ? p.highestWaveReached : (p.wave || 1);
+    GameState.player.lastDeathWave = p.lastDeathWave || null;
+    GameState.player.equipped = p.equipped || {};
+    GameState.player.inventory = Array.isArray(p.inventory) ? p.inventory : [];
 
-      this.recalculatePlayerStats();
-      this.updateGoldUI();
-      this.renderEquipment();
-      this.renderInventory();
-      this.updateWaveUI();
-      this.spawnEnemy();
+    localStorage.setItem('idle_player_id', p.id);
+    localStorage.setItem('idle_player_name', p.name);
+    this.saveGame();
 
-      this.showToast(`✨ Berhasil memuat Akun: ${p.name}!`, 'success');
-      this.logCombat(`✨ Berganti ke Akun: <b>${p.name}</b> (Wave ${p.wave}, Gold ${p.gold}).`);
-      return true;
-    } catch (err) {
-      this.showToast('Gagal menghubungi server untuk ganti akun.', 'error');
-      return false;
-    }
+    // Update UI Header
+    const profileNameEl = document.getElementById('profile-name');
+    const profileIdEl = document.getElementById('profile-id');
+    if (profileNameEl) profileNameEl.innerText = p.name;
+    if (profileIdEl) profileIdEl.innerText = `ID: ${p.id}`;
+
+    this.recalculatePlayerStats();
+    this.updateGoldUI();
+    this.renderEquipment();
+    this.renderInventory();
+    this.updateWaveUI();
+    this.spawnEnemy();
+
+    this.showToast(`✨ Berhasil memuat Akun: ${p.name}!`, 'success');
+    this.logCombat(`✨ Berganti ke Akun: <b>${p.name}</b> (Wave ${p.wave}, Gold ${p.gold}).`);
   },
 
   loadGame() {

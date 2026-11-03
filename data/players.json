@@ -151,8 +151,8 @@
     "hero_xp0e89p": {
       "id": "hero_xp0e89p",
       "name": "Hero_527",
-      "gold": 2188,
-      "wave": 6,
+      "gold": 2226,
+      "wave": 8,
       "highestWaveReached": 17,
       "lastDeathWave": 17,
       "equipped": {
@@ -390,7 +390,7 @@
           "legendaryDesc": null
         }
       ],
-      "updatedAt": 1793713414191
+      "updatedAt": 1793714134195
     }
   }
 }
