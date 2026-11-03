@@ -1648,15 +1648,15 @@ const GameEngine = {
 
   renderStandaloneLeaderboard(listEl, totalEl) {
     if (!listEl) return;
-    const mockPlayers = [
-      { id: 'bot_1', name: 'Aethelgard Sang Penakluk', wave: 88, highestWaveReached: 95, gold: 85400, legendaryCount: 3 },
-      { id: 'bot_2', name: 'Shadowblade Valen', wave: 72, highestWaveReached: 76, gold: 42100, legendaryCount: 2 },
-      { id: 'bot_3', name: 'Archmage Zephyr', wave: 60, highestWaveReached: 64, gold: 28900, legendaryCount: 2 },
-      { id: 'bot_4', name: 'Valkyrie Freya', wave: 45, highestWaveReached: 48, gold: 15400, legendaryCount: 1 },
-      { id: 'bot_5', name: 'IronClad Gorn', wave: 32, highestWaveReached: 35, gold: 8200, legendaryCount: 1 },
-      { id: 'bot_6', name: 'Mystic Elara', wave: 24, highestWaveReached: 26, gold: 4300, legendaryCount: 0 },
-      { id: 'bot_7', name: 'Novice Arthur', wave: 10, highestWaveReached: 12, gold: 1200, legendaryCount: 0 }
-    ];
+
+    // Ambil daftar pemain yang tersimpan (hanya pahlawan pemain asli)
+    let standaloneSavedPlayers = [];
+    try {
+      const stored = localStorage.getItem('idle_standalone_players_list');
+      if (stored) {
+        standaloneSavedPlayers = JSON.parse(stored);
+      }
+    } catch (e) {}
 
     const currentHero = {
       id: GameState.player.id,
@@ -1667,7 +1667,20 @@ const GameEngine = {
       legendaryCount: Object.values(GameState.player.equipped || {}).filter(eq => eq && eq.rarity === 'legendary').length
     };
 
-    const combined = [...mockPlayers, currentHero];
+    // Filter dan update entri pemain saat ini tanpa bot/nama asing
+    const playerMap = new Map();
+    standaloneSavedPlayers.forEach(p => {
+      if (p && p.name && !p.id.startsWith('bot_')) {
+        playerMap.set(p.id, p);
+      }
+    });
+    playerMap.set(currentHero.id, currentHero);
+
+    const combined = Array.from(playerMap.values());
+    try {
+      localStorage.setItem('idle_standalone_players_list', JSON.stringify(combined));
+    } catch (e) {}
+
     combined.sort((a, b) => {
       if (b.highestWaveReached !== a.highestWaveReached) return b.highestWaveReached - a.highestWaveReached;
       if (b.wave !== a.wave) return b.wave - a.wave;
@@ -1707,6 +1720,9 @@ const GameEngine = {
         </div>
       `;
     });
+
+    listEl.innerHTML = html;
+  },
 
     listEl.innerHTML = html;
   },
