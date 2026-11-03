@@ -265,15 +265,20 @@ const MarketEngine = {
       }
 
       const itemIcon = (window.getItemIcon ? window.getItemIcon(item) : (item.icon || '🎁'));
+      const slotNameMap = { weapon: '🗡️ Senjata', armor: '🥋 Baju Zirah', shield: '🛡️ Perisai', boots: '👢 Sepatu', accessory: '💍 Aksesori', special: '🔮 Item Khusus' };
+      const partBadge = slotNameMap[String(item.slot || '').toLowerCase()] || `📦 ${item.slot || 'Item'}`;
 
       card.innerHTML = `
         <div class="tile-top">
-          <span class="tile-icon">${itemIcon}</span>
+          <span class="tile-part-badge">${partBadge}</span>
           <span class="tile-rarity bg-rarity-${item.rarity}">${item.rarity.toUpperCase()}</span>
         </div>
         <div class="tile-mid">
           <div class="tile-badge-player" title="Penjual: ${listing.sellerName || 'Pemain'}">👤 ${listing.sellerName || 'Pemain'}</div>
-          <div class="tile-name rarity-${item.rarity}" title="${item.name}">${item.name}</div>
+          <div class="tile-name-row">
+            <span class="tile-icon">${itemIcon}</span>
+            <span class="tile-name rarity-${item.rarity}" title="${item.name}">${item.name}</span>
+          </div>
           <div class="tile-stat">+${item.statVal}${item.unit || ''} ${item.desc || ''}</div>
         </div>
         <div class="tile-bottom">
@@ -426,14 +431,20 @@ const MarketEngine = {
         `;
       }
 
+      const slotNameMap = { weapon: '🗡️ Senjata', armor: '🥋 Baju Zirah', shield: '🛡️ Perisai', boots: '👢 Sepatu', accessory: '💍 Aksesori', special: '🔮 Item Khusus' };
+      const partBadge = slotNameMap[String(item.slot || '').toLowerCase()] || `📦 ${item.slot || 'Item'}`;
+
       card.innerHTML = `
         <div class="tile-top">
-          <span class="tile-icon">${itemIcon}</span>
+          <span class="tile-part-badge">${partBadge}</span>
           <span class="tile-rarity bg-rarity-${item.rarity}">${item.rarity.toUpperCase()}</span>
         </div>
         <div class="tile-mid">
           <div class="tile-badge-system">🏛️ Toko Sistem</div>
-          <div class="tile-name rarity-${item.rarity}" title="${item.name}">${item.name}</div>
+          <div class="tile-name-row">
+            <span class="tile-icon">${itemIcon}</span>
+            <span class="tile-name rarity-${item.rarity}" title="${item.name}">${item.name}</span>
+          </div>
           <div class="tile-stat">+${item.statVal}${item.unit || ''} ${item.desc || ''}</div>
         </div>
         <div class="tile-bottom">

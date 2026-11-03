@@ -3,7 +3,21 @@
  * Logika Loop, Combat Data, Wave System, Corpse Tracking, Drop System & Auras
  */
 
-// 1. DEFINISI ITEM TEMPLATES (88 Items: 50+ New Items + 10 Legendary Items)
+// 2. HELPER NAMA & IKON SLOT/PART ITEM (Bahasa Indonesia yang Jelas)
+const SLOT_NAMES = {
+  weapon: { name: 'Senjata', icon: '🗡️' },
+  armor: { name: 'Baju Zirah', icon: '🥋' },
+  shield: { name: 'Perisai', icon: '🛡️' },
+  boots: { name: 'Sepatu', icon: '👢' },
+  accessory: { name: 'Aksesori', icon: '💍' },
+  special: { name: 'Item Khusus', icon: '🔮' }
+};
+
+function getItemSlotInfo(item) {
+  if (!item || !item.slot) return { name: 'Item', icon: '📦' };
+  const slotKey = String(item.slot).toLowerCase();
+  return SLOT_NAMES[slotKey] || { name: item.slot, icon: '📦' };
+}
 const ITEM_TEMPLATES = [
   // ════════════════════════════════════════════════════════════
   // ── COMMON WEAPONS (10 items) ──
@@ -1154,20 +1168,25 @@ const GameEngine = {
       const item = GameState.player.equipped[slot];
       const slotEl = document.createElement('div');
       slotEl.className = `equip-slot ${item ? `filled rarity-${item.rarity}` : ''}`;
+      const defaultInfo = SLOT_NAMES[slot] || { name: slot, icon: '🛡️' };
 
       if (item) {
+        const itemSlotInfo = getItemSlotInfo(item);
         slotEl.innerHTML = `
-          <div class="equip-slot-title">${slot}</div>
-          <div class="equip-slot-name">${getItemIcon(item)} ${item.name}</div>
+          <div class="equip-slot-top-row">
+            <span class="equip-slot-part-badge">${itemSlotInfo.icon} ${itemSlotInfo.name}</span>
+            <span class="equip-rarity-tag bg-rarity-${item.rarity}">${item.rarity}</span>
+          </div>
+          <div class="equip-slot-name" title="${item.name}">${getItemIcon(item)} ${item.name}</div>
           <div class="equip-slot-stat">+${item.statVal}${item.unit} ${item.desc}</div>
           ${item.legendaryEffect ? `<div class="equip-slot-legendary" title="${item.legendaryDesc || ''}">✨ ${item.legendaryEffect}</div>` : ''}
         `;
-        slotEl.title = `Klik untuk info & opsi ${item.name}`;
+        slotEl.title = `[${itemSlotInfo.name}] ${item.name}\n+${item.statVal}${item.unit} ${item.desc}`;
         slotEl.onclick = (e) => this.showEquippedContextMenu(e, item, slot);
       } else {
         slotEl.innerHTML = `
-          <div class="equip-slot-title">${slot}</div>
-          <div style="color:#64748b; font-size: 0.7rem;">[Kosong]</div>
+          <div class="equip-slot-title">${defaultInfo.icon} ${defaultInfo.name}</div>
+          <div class="equip-slot-empty-label">[Kosong]</div>
         `;
       }
       container.appendChild(slotEl);
@@ -1189,17 +1208,21 @@ const GameEngine = {
       const slotEl = document.createElement('div');
 
       if (item) {
+        const slotInfo = getItemSlotInfo(item);
         slotEl.className = `inv-slot rarity-${item.rarity}`;
         slotEl.innerHTML = `
           <div class="inv-item-top">
-            <span class="inv-icon">${getItemIcon(item)}</span>
+            <span class="inv-slot-part-badge">${slotInfo.icon} ${slotInfo.name}</span>
             <span class="inv-rarity-pill bg-rarity-${item.rarity}">${item.rarity}</span>
           </div>
-          <div class="inv-item-name" title="${item.name}">${item.name}</div>
+          <div class="inv-item-center">
+            <span class="inv-icon">${getItemIcon(item)}</span>
+            <div class="inv-item-name" title="${item.name}">${item.name}</div>
+          </div>
           <div class="inv-item-stat">+${item.statVal}${item.unit} ${item.desc}</div>
           ${item.legendaryEffect ? `<div class="inv-item-legendary" title="${item.legendaryDesc || ''}">⚡ ${item.legendaryEffect}</div>` : ''}
         `;
-
+        slotEl.title = `[${slotInfo.name}] ${item.name}\n+${item.statVal}${item.unit} ${item.desc}`;
         slotEl.onclick = (e) => this.showItemContextMenu(e, item, i);
       } else {
         slotEl.className = 'inv-slot empty';
@@ -1720,9 +1743,6 @@ const GameEngine = {
         </div>
       `;
     });
-
-    listEl.innerHTML = html;
-  },
 
     listEl.innerHTML = html;
   },
