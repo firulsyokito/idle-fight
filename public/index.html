@@ -70,7 +70,15 @@
               <span class="panel-subhint">Kelola item drop dari pertarungan arena</span>
             </div>
             <div class="panel-header-actions">
-              <button class="btn-sm btn-secondary" id="btn-sell-all-common">Jual Semua Common</button>
+              <div class="sell-bulk-controls">
+                <select class="tier-select-dropdown" id="sell-tier-select" title="Pilih batas tier item untuk dijual">
+                  <option value="common">⚪ Common</option>
+                  <option value="uncommon">🟢 Uncommon & ke bawah</option>
+                  <option value="rare">🔵 Rare & ke bawah</option>
+                  <option value="epic">🟣 Epic & ke bawah</option>
+                </select>
+                <button class="btn-sm btn-secondary" id="btn-sell-all-tier">💰 Jual Semua</button>
+              </div>
             </div>
           </div>
 
@@ -431,6 +439,26 @@
       </div>
       <div class="modal-footer" style="justify-content: center;">
         <button class="btn btn-primary" id="btn-close-offline-report" style="width: 100%; padding: 0.75rem;">Klaim Hadiah & Lanjutkan Petualangan ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TEMPA & UPGRADE ITEM PERLENGKAPAN -->
+  <div class="modal-overlay" id="modal-item-upgrade">
+    <div class="modal-card upgrade-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3>🔥 Tempa & Upgrade Perlengkapan</h3>
+          <span class="modal-subtitle">Bakar item tak terpakai dari tas untuk meningkatkan level dan stat perlengkapan aktif</span>
+        </div>
+        <button class="modal-close" id="modal-upgrade-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-upgrade-body">
+        <!-- Rendered dynamically by GameEngine -->
+      </div>
+      <div class="modal-footer upgrade-modal-footer">
+        <button class="btn btn-secondary" id="modal-upgrade-close-btn">Tutup</button>
+        <button class="btn btn-primary btn-burn-action" id="modal-upgrade-confirm-btn">🔥 Bakar Item & Upgrade</button>
       </div>
     </div>
   </div>

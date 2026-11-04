@@ -355,11 +355,30 @@ const GameEngine = {
     this.spawnEnemy();
 
     // Event listener tombol cepat
+    const btnSellTier = document.getElementById('btn-sell-all-tier');
+    const selSellTier = document.getElementById('sell-tier-select');
+    if (btnSellTier && selSellTier) {
+      btnSellTier.onclick = () => this.sellAllByTier(selSellTier.value);
+    }
     const btnSellCommon = document.getElementById('btn-sell-all-common');
-    if (btnSellCommon) btnSellCommon.onclick = () => this.sellAllCommonItems();
+    if (btnSellCommon) btnSellCommon.onclick = () => this.sellAllByTier('common');
 
     const btnCollectAll = document.getElementById('btn-collect-all-loot');
     if (btnCollectAll) btnCollectAll.onclick = () => this.collectAllCanvasLoot();
+
+    // Event listener modal upgrade perlengkapan
+    const modalUpgradeClose = document.getElementById('modal-upgrade-close');
+    const modalUpgradeCloseBtn = document.getElementById('modal-upgrade-close-btn');
+    const modalUpgradeConfirmBtn = document.getElementById('modal-upgrade-confirm-btn');
+    if (modalUpgradeClose) modalUpgradeClose.onclick = () => this.closeUpgradeModal();
+    if (modalUpgradeCloseBtn) modalUpgradeCloseBtn.onclick = () => this.closeUpgradeModal();
+    if (modalUpgradeConfirmBtn) {
+      modalUpgradeConfirmBtn.onclick = () => {
+        if (this.activeUpgradeSlot) {
+          this.executeUpgradeEquippedItem(this.activeUpgradeSlot);
+        }
+      };
+    }
 
     // Sinkronisasi data awal dengan server cloud
     this.syncWithServer();
@@ -1040,14 +1059,18 @@ const GameEngine = {
     this.saveGame();
   },
 
-  sellAllCommonItems() {
+  sellAllByTier(maxTier = 'common') {
+    const targetRank = (RARITIES[maxTier] && RARITIES[maxTier].rank) || 1;
     let soldCount = 0;
     let earnedGold = 0;
 
     for (let i = GameState.player.inventory.length - 1; i >= 0; i--) {
       const item = GameState.player.inventory[i];
-      if (item.rarity === 'common') {
-        earnedGold += item.npcSellPrice;
+      if (!item) continue;
+      const rank = (RARITIES[item.rarity] && RARITIES[item.rarity].rank) || 1;
+      // Jangan pernah jual Legendary (rank 5)
+      if (rank <= targetRank && rank < 5) {
+        earnedGold += (item.npcSellPrice || 10);
         GameState.player.inventory.splice(i, 1);
         soldCount++;
       }
@@ -1055,13 +1078,21 @@ const GameEngine = {
 
     if (soldCount > 0) {
       GameState.player.gold += earnedGold;
-      this.showToast(`Berhasil menjual ${soldCount} item Common seharga +${earnedGold} Gold.`, 'success');
+      const tierName = RARITIES[maxTier] ? RARITIES[maxTier].name : maxTier;
+      this.showToast(`💰 Berhasil menjual ${soldCount} item (${tierName} & di bawahnya) seharga +${earnedGold} Gold.`, 'success');
       this.updateGoldUI();
       this.renderInventory();
       this.saveGame();
+      if (this.activeUpgradeSlot) {
+        this.renderUpgradeModalContent(this.activeUpgradeSlot);
+      }
     } else {
-      this.showToast('Tidak ada item Common di tas.', 'info');
+      this.showToast('Tidak ada item di tas yang cocok dengan tier tersebut.', 'info');
     }
+  },
+
+  sellAllCommonItems() {
+    this.sellAllByTier('common');
   },
 
   // 12. UI DOM RENDERING
@@ -1172,17 +1203,25 @@ const GameEngine = {
 
       if (item) {
         const itemSlotInfo = getItemSlotInfo(item);
+        const itemLevel = item.level || 1;
         slotEl.innerHTML = `
           <div class="equip-slot-top-row">
             <span class="equip-slot-part-badge">${itemSlotInfo.icon} ${itemSlotInfo.name}</span>
-            <span class="equip-rarity-tag bg-rarity-${item.rarity}">${item.rarity}</span>
+            <div style="display:flex; gap:3px; align-items:center;">
+              ${itemLevel > 1 ? `<span class="equip-level-badge">Lv.${itemLevel}</span>` : ''}
+              <span class="equip-rarity-tag bg-rarity-${item.rarity}">${item.rarity}</span>
+            </div>
           </div>
           <div class="equip-slot-name" title="${item.name}">${getItemIcon(item)} ${item.name}</div>
           <div class="equip-slot-stat">+${item.statVal}${item.unit} ${item.desc}</div>
           ${item.legendaryEffect ? `<div class="equip-slot-legendary" title="${item.legendaryDesc || ''}">✨ ${item.legendaryEffect}</div>` : ''}
         `;
-        slotEl.title = `[${itemSlotInfo.name}] ${item.name}\n+${item.statVal}${item.unit} ${item.desc}`;
+        slotEl.title = `[${itemSlotInfo.name}] ${item.name} ${itemLevel > 1 ? `(Lv.${itemLevel})` : ''}\n+${item.statVal}${item.unit} ${item.desc}`;
         slotEl.onclick = (e) => this.showEquippedContextMenu(e, item, slot);
+        slotEl.oncontextmenu = (e) => {
+          e.preventDefault();
+          this.showEquippedContextMenu(e, item, slot);
+        };
       } else {
         slotEl.innerHTML = `
           <div class="equip-slot-title">${defaultInfo.icon} ${defaultInfo.name}</div>
@@ -1209,11 +1248,15 @@ const GameEngine = {
 
       if (item) {
         const slotInfo = getItemSlotInfo(item);
+        const itemLevel = item.level || 1;
         slotEl.className = `inv-slot rarity-${item.rarity}`;
         slotEl.innerHTML = `
           <div class="inv-item-top">
             <span class="inv-slot-part-badge">${slotInfo.icon} ${slotInfo.name}</span>
-            <span class="inv-rarity-pill bg-rarity-${item.rarity}">${item.rarity}</span>
+            <div style="display:flex; gap:2px; align-items:center;">
+              ${itemLevel > 1 ? `<span class="equip-level-badge inv-level-badge">Lv.${itemLevel}</span>` : ''}
+              <span class="inv-rarity-pill bg-rarity-${item.rarity}">${item.rarity}</span>
+            </div>
           </div>
           <div class="inv-item-center">
             <span class="inv-icon">${getItemIcon(item)}</span>
@@ -1222,8 +1265,12 @@ const GameEngine = {
           <div class="inv-item-stat">+${item.statVal}${item.unit} ${item.desc}</div>
           ${item.legendaryEffect ? `<div class="inv-item-legendary" title="${item.legendaryDesc || ''}">⚡ ${item.legendaryEffect}</div>` : ''}
         `;
-        slotEl.title = `[${slotInfo.name}] ${item.name}\n+${item.statVal}${item.unit} ${item.desc}`;
+        slotEl.title = `[${slotInfo.name}] ${item.name} ${itemLevel > 1 ? `(Lv.${itemLevel})` : ''}\n+${item.statVal}${item.unit} ${item.desc}`;
         slotEl.onclick = (e) => this.showItemContextMenu(e, item, i);
+        slotEl.oncontextmenu = (e) => {
+          e.preventDefault();
+          this.showItemContextMenu(e, item, i);
+        };
       } else {
         slotEl.className = 'inv-slot empty';
       }
@@ -1272,6 +1319,7 @@ const GameEngine = {
     this.closeItemContextMenu();
     e.stopPropagation();
 
+    const itemLevel = item.level || 1;
     const popup = document.createElement('div');
     popup.className = 'item-context-popup equip-context-popup';
     popup.id = 'active-context-popup';
@@ -1280,7 +1328,10 @@ const GameEngine = {
         <span style="font-size:1.4rem;">${getItemIcon(item)}</span>
         <div style="flex:1;">
           <div style="font-size:0.82rem; font-weight:700;" class="rarity-${item.rarity}">${item.name}</div>
-          <div style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase;">[${slot.toUpperCase()}] • <b class="rarity-${item.rarity}">${item.rarity.toUpperCase()}</b></div>
+          <div style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase; display:flex; gap:4px; align-items:center;">
+            <span>[${slot.toUpperCase()}] • <b class="rarity-${item.rarity}">${item.rarity.toUpperCase()}</b></span>
+            <span class="equip-level-badge">Lv.${itemLevel}</span>
+          </div>
         </div>
       </div>
       <div style="font-size:0.75rem; color:#38bdf8; font-weight:600; margin-bottom:4px; line-height:1.3;">
@@ -1294,6 +1345,9 @@ const GameEngine = {
       <div style="font-size:0.65rem; color:#64748b; margin-bottom:6px;">
         Status: <i>Sedang aktif digunakan</i>
       </div>
+      <button class="ctx-btn ctx-upgrade" id="ctx-upgrade-equip" style="background:#1e3a8a; border-color:#3b82f6; color:#93c5fd; font-weight:700;">
+        🔥 Tempa / Upgrade Level (Bakar Item)
+      </button>
       <button class="ctx-btn ctx-unequip" id="ctx-unequip">
         🛡️ Lepas Perlengkapan
       </button>
@@ -1305,8 +1359,12 @@ const GameEngine = {
     document.body.appendChild(popup);
     const rect = e.currentTarget.getBoundingClientRect();
     popup.style.top = `${rect.bottom + window.scrollY + 4}px`;
-    popup.style.left = `${Math.min(window.innerWidth - 210, Math.max(10, rect.left + window.scrollX - 20))}px`;
+    popup.style.left = `${Math.min(window.innerWidth - 220, Math.max(10, rect.left + window.scrollX - 20))}px`;
 
+    popup.querySelector('#ctx-upgrade-equip').onclick = () => {
+      this.closeItemContextMenu();
+      this.openUpgradeModal(slot);
+    };
     popup.querySelector('#ctx-unequip').onclick = () => {
       this.closeItemContextMenu();
       this.unequipItem(slot);
@@ -1314,6 +1372,255 @@ const GameEngine = {
     popup.querySelector('#ctx-close-detail').onclick = () => {
       this.closeItemContextMenu();
     };
+  },
+
+  getUpgradeExpNeeded(level) {
+    return Math.floor(30 * Math.pow(1.35, Math.max(0, (level || 1) - 1)));
+  },
+
+  getItemStatAtLevel(item, level) {
+    const base = (item.baseStatVal !== undefined && item.baseStatVal !== null) ? item.baseStatVal : item.statVal;
+    const mult = 1 + ((level || 1) - 1) * 0.12;
+    if (item.unit === 'x') {
+      return Math.round(base * mult * 100) / 100;
+    }
+    if (item.unit === '%') {
+      return Math.round(base * mult * 10) / 10;
+    }
+    return Math.round(base * mult);
+  },
+
+  openUpgradeModal(slot) {
+    const item = GameState.player.equipped[slot];
+    if (!item) {
+      this.showToast('Tidak ada perlengkapan yang dipasang di slot ini.', 'warn');
+      return;
+    }
+    this.activeUpgradeSlot = slot;
+    if (!this.upgradeSacrificeTier) this.upgradeSacrificeTier = 'common';
+
+    const modal = document.getElementById('modal-item-upgrade');
+    if (modal) {
+      modal.classList.add('active');
+      this.renderUpgradeModalContent(slot);
+    }
+  },
+
+  closeUpgradeModal() {
+    this.activeUpgradeSlot = null;
+    const modal = document.getElementById('modal-item-upgrade');
+    if (modal) modal.classList.remove('active');
+  },
+
+  renderUpgradeModalContent(slot) {
+    const body = document.getElementById('modal-upgrade-body');
+    if (!body) return;
+
+    const item = GameState.player.equipped[slot];
+    if (!item) {
+      body.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#94a3b8;">Item perlengkapan tidak ditemukan atau telah dilepas.</div>';
+      return;
+    }
+
+    if (!item.level) item.level = 1;
+    if (item.upgradeExp === undefined) item.upgradeExp = 0;
+    if (item.baseStatVal === undefined) item.baseStatVal = item.statVal;
+
+    const currentLevel = item.level;
+    const currentStat = item.statVal;
+    const expNeeded = this.getUpgradeExpNeeded(currentLevel);
+    const expPct = Math.min(100, Math.floor((item.upgradeExp / expNeeded) * 100));
+
+    const selectedTier = this.upgradeSacrificeTier || 'common';
+    const targetRank = (RARITIES[selectedTier] && RARITIES[selectedTier].rank) || 1;
+
+    // Filter item bahan dari inventory (legendary tidak pernah dibakar)
+    const matchingItems = GameState.player.inventory.filter(invItem => {
+      if (!invItem) return false;
+      const r = (RARITIES[invItem.rarity] && RARITIES[invItem.rarity].rank) || 1;
+      return r <= targetRank && r < 5;
+    });
+
+    const SACRIFICE_EXP = { common: 15, uncommon: 45, rare: 150, epic: 600 };
+    let totalGainedExp = 0;
+    for (const m of matchingItems) {
+      totalGainedExp += (SACRIFICE_EXP[m.rarity] || 15);
+    }
+
+    // Simulasi kenaikan level dengan bahan yang tersedia
+    let simLevel = currentLevel;
+    let simExp = item.upgradeExp + totalGainedExp;
+    let simReq = this.getUpgradeExpNeeded(simLevel);
+    let levelsGained = 0;
+    while (simExp >= simReq) {
+      simExp -= simReq;
+      simLevel++;
+      levelsGained++;
+      simReq = this.getUpgradeExpNeeded(simLevel);
+    }
+    const nextStat = this.getItemStatAtLevel(item, simLevel);
+    const statDiff = Math.round((nextStat - currentStat) * 10) / 10;
+    const slotInfo = getItemSlotInfo(item);
+
+    body.innerHTML = `
+      <div class="upgrade-target-card rarity-${item.rarity}">
+        <div class="upgrade-target-header">
+          <div class="upgrade-target-icon">${getItemIcon(item)}</div>
+          <div class="upgrade-target-info">
+            <div class="upgrade-target-name">${item.name}</div>
+            <div class="upgrade-target-meta">
+              <span class="inv-slot-part-badge">${slotInfo.icon} ${slotInfo.name}</span>
+              <span class="inv-rarity-pill bg-rarity-${item.rarity}">${item.rarity.toUpperCase()}</span>
+              <span class="equip-level-badge">Lv.${currentLevel}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="upgrade-stat-comparison">
+          <div class="stat-compare-box">
+            <span class="compare-lbl">Level Perlengkapan</span>
+            <div class="compare-val">
+              <span class="old-val">Lv.${currentLevel}</span>
+              ${levelsGained > 0 ? `<span class="arrow-val">➔</span><span class="new-val">Lv.${simLevel}</span>` : ''}
+            </div>
+          </div>
+          <div class="stat-compare-box">
+            <span class="compare-lbl">Stat Bonus (${item.desc})</span>
+            <div class="compare-val">
+              <span class="old-val">+${currentStat}${item.unit}</span>
+              ${levelsGained > 0 ? `<span class="arrow-val">➔</span><span class="new-val">+${nextStat}${item.unit} (+${statDiff})</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="upgrade-exp-bar-container">
+          <div class="upgrade-exp-bar-labels">
+            <span>Progress EXP Tempa</span>
+            <span>${item.upgradeExp} / ${expNeeded} EXP (${expPct}%)</span>
+          </div>
+          <div class="upgrade-exp-track">
+            <div class="upgrade-exp-fill" style="width: ${expPct}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="upgrade-options-box">
+        <label class="upgrade-section-label">Pilih Batas Tier Item Tas yang Akan Dibakar:</label>
+        <select id="upgrade-tier-select-input" class="form-input upgrade-tier-dropdown">
+          <option value="common" ${selectedTier === 'common' ? 'selected' : ''}>⚪ Common & di bawahnya (Hanya Common)</option>
+          <option value="uncommon" ${selectedTier === 'uncommon' ? 'selected' : ''}>🟢 Uncommon & di bawahnya (Common + Uncommon)</option>
+          <option value="rare" ${selectedTier === 'rare' ? 'selected' : ''}>🔵 Rare & di bawahnya (Common + Uncommon + Rare)</option>
+          <option value="epic" ${selectedTier === 'epic' ? 'selected' : ''}>🟣 Epic & di bawahnya (Common + Uncommon + Rare + Epic)</option>
+        </select>
+        <div class="upgrade-tier-hint">
+          🛡️ <i>Item Legendary <b>TIDAK AKAN PERNAH</b> dibakar demi keamanan perlengkapan langka Anda.</i>
+        </div>
+      </div>
+
+      <div class="upgrade-preview-box ${matchingItems.length > 0 ? 'has-items' : 'empty-items'}">
+        <div class="preview-row">
+          <span>Item cocok di tas:</span>
+          <b>${matchingItems.length} Item</b>
+        </div>
+        <div class="preview-row">
+          <span>Total EXP Tempa didapat:</span>
+          <b style="color:#38bdf8;">+${totalGainedExp} EXP</b>
+        </div>
+        <div class="preview-row">
+          <span>Hasil Tempa:</span>
+          ${levelsGained > 0 
+            ? `<b style="color:#4ade80;">🎉 Naik +${levelsGained} Level (ke Lv.${simLevel})!</b>` 
+            : (matchingItems.length > 0 
+                ? `<span style="color:#fbbf24;">EXP bertambah (${simExp}/${simReq} EXP)</span>` 
+                : `<span style="color:#ef4444;">Tas tidak memiliki item tier ini!</span>`)}
+        </div>
+      </div>
+    `;
+
+    // Pasang listener ganti tier
+    const sel = document.getElementById('upgrade-tier-select-input');
+    if (sel) {
+      sel.onchange = (e) => {
+        this.upgradeSacrificeTier = e.target.value;
+        this.renderUpgradeModalContent(slot);
+      };
+    }
+
+    // Update tombol konfirmasi
+    const confirmBtn = document.getElementById('modal-upgrade-confirm-btn');
+    if (confirmBtn) {
+      confirmBtn.disabled = matchingItems.length === 0;
+      confirmBtn.innerText = matchingItems.length > 0
+        ? `🔥 Bakar ${matchingItems.length} Item & Upgrade`
+        : `🔥 Tidak Ada Bahan di Tas`;
+    }
+  },
+
+  executeUpgradeEquippedItem(slot) {
+    const item = GameState.player.equipped[slot];
+    if (!item) {
+      this.showToast('Item tidak ditemukan.', 'warn');
+      return;
+    }
+
+    if (!item.level) item.level = 1;
+    if (item.upgradeExp === undefined) item.upgradeExp = 0;
+    if (item.baseStatVal === undefined) item.baseStatVal = item.statVal;
+
+    const selectedTier = this.upgradeSacrificeTier || 'common';
+    const targetRank = (RARITIES[selectedTier] && RARITIES[selectedTier].rank) || 1;
+
+    const SACRIFICE_EXP = { common: 15, uncommon: 45, rare: 150, epic: 600 };
+    let totalGainedExp = 0;
+    let burnedCount = 0;
+
+    // Hapus dari inventory dari index belakang
+    for (let i = GameState.player.inventory.length - 1; i >= 0; i--) {
+      const invItem = GameState.player.inventory[i];
+      if (!invItem) continue;
+      const r = (RARITIES[invItem.rarity] && RARITIES[invItem.rarity].rank) || 1;
+      if (r <= targetRank && r < 5) {
+        totalGainedExp += (SACRIFICE_EXP[invItem.rarity] || 15);
+        GameState.player.inventory.splice(i, 1);
+        burnedCount++;
+      }
+    }
+
+    if (burnedCount === 0) {
+      this.showToast('Tidak ada item di tas yang cocok untuk dibakar!', 'warn');
+      return;
+    }
+
+    item.upgradeExp += totalGainedExp;
+    let expReq = this.getUpgradeExpNeeded(item.level);
+    let levelsGained = 0;
+    while (item.upgradeExp >= expReq) {
+      item.upgradeExp -= expReq;
+      item.level++;
+      levelsGained++;
+      expReq = this.getUpgradeExpNeeded(item.level);
+    }
+
+    // Update stat & sell price
+    item.statVal = this.getItemStatAtLevel(item, item.level);
+    item.npcSellPrice = Math.round((item.npcSellPrice || 10) * (1 + (item.level - 1) * 0.15));
+
+    // Rekalkulasi & UI
+    this.recalculatePlayerStats();
+    this.renderEquipment();
+    this.renderInventory();
+    this.saveGame();
+
+    if (levelsGained > 0) {
+      this.showToast(`🔥 Sukses membakar ${burnedCount} item! ${item.name} naik ke Level ${item.level}!`, 'success');
+      this.logCombat(`🔥 [TEMPA] <b>${item.name}</b> berhasil ditempa ke <b>Level ${item.level}</b> (+${item.statVal}${item.unit} ${item.desc})!`);
+    } else {
+      this.showToast(`🔥 Sukses membakar ${burnedCount} item! Mendapatkan +${totalGainedExp} EXP Tempa.`, 'info');
+      this.logCombat(`🔥 [TEMPA] Membakar ${burnedCount} item untuk <b>${item.name}</b> (+${totalGainedExp} EXP).`);
+    }
+
+    // Refresh isi modal
+    this.renderUpgradeModalContent(slot);
   },
 
   closeItemContextMenu() {
