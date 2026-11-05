@@ -88,7 +88,8 @@ const MarketEngine = {
 
   async fetchRules() {
     try {
-      const res = await fetch('/api/market/rules');
+      const url = window.getApiUrl ? window.getApiUrl('/api/market/rules') : '/api/market/rules';
+      const res = await fetch(url);
       if (res.ok) {
         this.rules = await res.json();
         return;
@@ -115,7 +116,8 @@ const MarketEngine = {
 
   async refreshListings() {
     try {
-      const res = await fetch('/api/market/listings');
+      const url = window.getApiUrl ? window.getApiUrl('/api/market/listings') : '/api/market/listings';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
 
@@ -327,7 +329,8 @@ const MarketEngine = {
   async fetchSystemShop() {
     const playerId = GameState.player.id;
     try {
-      const res = await fetch(`/api/market/system-shop?playerId=${playerId}`);
+      const url = window.getApiUrl ? window.getApiUrl(`/api/market/system-shop?playerId=${playerId}`) : `/api/market/system-shop?playerId=${playerId}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Offline');
       const data = await res.json();
       this.systemShopData = data;
@@ -510,7 +513,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/system-buy', {
+      const buyUrl = window.getApiUrl ? window.getApiUrl('/api/market/system-buy') : '/api/market/system-buy';
+      const res = await fetch(buyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -579,7 +583,8 @@ const MarketEngine = {
   async fetchMySales() {
     const myPlayerId = GameState.player.id;
     try {
-      const res = await fetch(`/api/market/my-sales/${myPlayerId}`);
+      const url = window.getApiUrl ? window.getApiUrl(`/api/market/my-sales/${myPlayerId}`) : `/api/market/my-sales/${myPlayerId}`;
+      const res = await fetch(url);
       if (res.ok) {
         this.mySalesData = await res.json();
         this.renderMyShop();
@@ -660,7 +665,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/buy', {
+      const buyUrl = window.getApiUrl ? window.getApiUrl('/api/market/buy') : '/api/market/buy';
+      const res = await fetch(buyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -715,7 +721,8 @@ const MarketEngine = {
 
   async claimSalesGold() {
     try {
-      const res = await fetch('/api/market/claim-sales', {
+      const claimUrl = window.getApiUrl ? window.getApiUrl('/api/market/claim-sales') : '/api/market/claim-sales';
+      const res = await fetch(claimUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerId: GameState.player.id })
@@ -755,7 +762,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/cancel', {
+      const cancelUrl = window.getApiUrl ? window.getApiUrl('/api/market/cancel') : '/api/market/cancel';
+      const res = await fetch(cancelUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId, sellerId: GameState.player.id })
@@ -873,7 +881,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/list', {
+      const listUrl = window.getApiUrl ? window.getApiUrl('/api/market/list') : '/api/market/list';
+      const res = await fetch(listUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

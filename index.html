@@ -3214,6 +3214,17 @@ body {
           </div>
         </div>
 
+        <!-- Box Pengaturan Server Online / Lokal -->
+        <div class="account-card-box">
+          <div class="acc-id-label">🌐 Alamat Server Game (Online / LAN / Lokal):</div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
+            <input type="text" id="input-server-url" class="form-input" style="flex: 1;" placeholder="http://localhost:3000 atau https://server-anda.trycloudflare.com">
+            <button class="btn btn-primary" id="btn-save-server-url">Simpan & Cek</button>
+            <button class="btn btn-secondary" id="btn-reset-server-url" title="Kembalikan ke server default">Reset</button>
+          </div>
+          <div class="acc-hint" id="server-status-hint">Status: Menghubungkan ke server...</div>
+        </div>
+
         <!-- Box Cadangan / Transfer Save Game (Google Sites & Offline) -->
         <div class="account-card-box">
           <div class="acc-id-label">💾 Cadangan / Transfer Save Game (Google Sites & Offline):</div>
@@ -3335,6 +3346,63 @@ body {
 
   <!-- SCRIPTS MODULAR -->
   <script>
+/* --- config.js --- */
+// ============================================================================
+// 🌐 PENGATURAN ALAMAT SERVER GAME (IDLE FIGHT RPG)
+// ============================================================================
+// Ubah alamat di bawah ini jika URL server berubah (Cloudflare Tunnel / Koyeb / Render / VPS):
+window.DEFAULT_SERVER_URL = 'https://smile-insured-stated-receives.trycloudflare.com';
+// ============================================================================
+
+/**
+ * Mendapatkan URL server aktif (memprioritaskan server yang disetel pemain di UI localStorage)
+ */
+window.getServerUrl = function() {
+  const custom = localStorage.getItem('GAME_SERVER_URL');
+  if (custom && custom.trim()) {
+    return custom.trim().replace(/\/+$/, '');
+  }
+  if (window.DEFAULT_SERVER_URL && window.DEFAULT_SERVER_URL.trim()) {
+    return window.DEFAULT_SERVER_URL.trim().replace(/\/+$/, '');
+  }
+  return '';
+};
+
+/**
+ * Membentuk URL API lengkap berdasarkan endpoint
+ * @param {string} endpoint contoh: '/api/player/login'
+ * @returns {string} URL endpoint yang sudah digabung dengan host server
+ */
+window.getApiUrl = function(endpoint) {
+  const base = window.getServerUrl();
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return base ? `${base}${path}` : path;
+};
+
+/**
+ * Mengecek apakah server dapat dijangkau
+ */
+window.checkServerStatus = async function(customUrl) {
+  const base = (customUrl || window.getServerUrl() || '').replace(/\/+$/, '');
+  if (!base) return { ok: false, error: 'URL Server kosong' };
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(`${base}/api/server-info`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      return { ok: true, data };
+    }
+    return { ok: false, status: res.status };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+};
+
+</script>
+<script>
 /* --- RenderEngine.js --- */
 /**
  * IDLE EXCHANGE - RenderEngine.js
@@ -6679,7 +6747,8 @@ const GameEngine = {
 
   async syncWithServer() {
     try {
-      const res = await fetch(`/api/player/${GameState.player.id}`);
+      const url = window.getApiUrl ? window.getApiUrl(`/api/player/${GameState.player.id}`) : `/api/player/${GameState.player.id}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data.player) {
@@ -6728,7 +6797,8 @@ const GameEngine = {
         equipped: GameState.player.equipped,
         inventory: GameState.player.inventory
       };
-      await fetch('/api/player/save', {
+      const saveUrl = window.getApiUrl ? window.getApiUrl('/api/player/save') : '/api/player/save';
+      await fetch(saveUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -6940,9 +7010,10 @@ const GameEngine = {
 
     listEl.innerHTML = '<div class="leaderboard-loading">Memuat peringkat dari server...</div>';
 
-    // 1. Coba ambil dari server API lokal (jika node server berjalan)
+    // 1. Coba ambil dari server API lokal / online publik
     try {
-      const res = await fetch('/api/leaderboard');
+      const lbUrl = window.getApiUrl ? window.getApiUrl('/api/leaderboard') : '/api/leaderboard';
+      const res = await fetch(lbUrl);
       if (res.ok) {
         const data = await res.json();
         if (data.leaderboard && data.leaderboard.length > 0) {
@@ -7147,7 +7218,8 @@ const GameEngine = {
     }
 
     try {
-      const res = await fetch('/api/player/rename', {
+      const renameUrl = window.getApiUrl ? window.getApiUrl('/api/player/rename') : '/api/player/rename';
+      const res = await fetch(renameUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: GameState.player.id, newName: clean })
@@ -7257,9 +7329,10 @@ const GameEngine = {
     }
     const cleanId = targetId.trim();
 
-    // 1. Coba hubungi server backend (jika bermain via localhost / LAN)
+    // 1. Coba hubungi server backend (jika bermain via localhost / online publik)
     try {
-      const res = await fetch('/api/player/login', {
+      const loginUrl = window.getApiUrl ? window.getApiUrl('/api/player/login') : '/api/player/login';
+      const res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: cleanId, name: targetName })
@@ -7462,7 +7535,8 @@ const MarketEngine = {
 
   async fetchRules() {
     try {
-      const res = await fetch('/api/market/rules');
+      const url = window.getApiUrl ? window.getApiUrl('/api/market/rules') : '/api/market/rules';
+      const res = await fetch(url);
       if (res.ok) {
         this.rules = await res.json();
         return;
@@ -7489,7 +7563,8 @@ const MarketEngine = {
 
   async refreshListings() {
     try {
-      const res = await fetch('/api/market/listings');
+      const url = window.getApiUrl ? window.getApiUrl('/api/market/listings') : '/api/market/listings';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Network error');
       const data = await res.json();
 
@@ -7701,7 +7776,8 @@ const MarketEngine = {
   async fetchSystemShop() {
     const playerId = GameState.player.id;
     try {
-      const res = await fetch(`/api/market/system-shop?playerId=${playerId}`);
+      const url = window.getApiUrl ? window.getApiUrl(`/api/market/system-shop?playerId=${playerId}`) : `/api/market/system-shop?playerId=${playerId}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Offline');
       const data = await res.json();
       this.systemShopData = data;
@@ -7884,7 +7960,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/system-buy', {
+      const buyUrl = window.getApiUrl ? window.getApiUrl('/api/market/system-buy') : '/api/market/system-buy';
+      const res = await fetch(buyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -7953,7 +8030,8 @@ const MarketEngine = {
   async fetchMySales() {
     const myPlayerId = GameState.player.id;
     try {
-      const res = await fetch(`/api/market/my-sales/${myPlayerId}`);
+      const url = window.getApiUrl ? window.getApiUrl(`/api/market/my-sales/${myPlayerId}`) : `/api/market/my-sales/${myPlayerId}`;
+      const res = await fetch(url);
       if (res.ok) {
         this.mySalesData = await res.json();
         this.renderMyShop();
@@ -8034,7 +8112,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/buy', {
+      const buyUrl = window.getApiUrl ? window.getApiUrl('/api/market/buy') : '/api/market/buy';
+      const res = await fetch(buyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -8089,7 +8168,8 @@ const MarketEngine = {
 
   async claimSalesGold() {
     try {
-      const res = await fetch('/api/market/claim-sales', {
+      const claimUrl = window.getApiUrl ? window.getApiUrl('/api/market/claim-sales') : '/api/market/claim-sales';
+      const res = await fetch(claimUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerId: GameState.player.id })
@@ -8129,7 +8209,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/cancel', {
+      const cancelUrl = window.getApiUrl ? window.getApiUrl('/api/market/cancel') : '/api/market/cancel';
+      const res = await fetch(cancelUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ listingId, sellerId: GameState.player.id })
@@ -8247,7 +8328,8 @@ const MarketEngine = {
     }
 
     try {
-      const res = await fetch('/api/market/list', {
+      const listUrl = window.getApiUrl ? window.getApiUrl('/api/market/list') : '/api/market/list';
+      const res = await fetch(listUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -8495,24 +8577,81 @@ window.MarketEngine = MarketEngine;
       const inputSwitchAccId = document.getElementById('input-switch-acc-id');
       const btnCreateNewAcc = document.getElementById('btn-create-new-acc');
       const modalLanUrl = document.getElementById('modal-lan-url');
+      const inputServerUrl = document.getElementById('input-server-url');
+      const btnSaveServerUrl = document.getElementById('btn-save-server-url');
+      const serverStatusHint = document.getElementById('server-status-hint');
+
+      function updateServerStatusUI() {
+        const currentUrl = window.getServerUrl ? window.getServerUrl() : '';
+        if (inputServerUrl) inputServerUrl.value = currentUrl;
+      }
+
+      async function testAndSaveServerUrl(newUrl) {
+        if (!newUrl || !newUrl.trim()) {
+          localStorage.removeItem('GAME_SERVER_URL');
+        } else {
+          localStorage.setItem('GAME_SERVER_URL', newUrl.trim());
+        }
+        updateServerStatusUI();
+        if (serverStatusHint) serverStatusHint.innerText = 'Sedang mengecek koneksi ke server...';
+        if (window.checkServerStatus) {
+          const res = await window.checkServerStatus(newUrl);
+          if (res.ok) {
+            if (serverStatusHint) serverStatusHint.innerHTML = '✅ <span style="color:#10b981;font-weight:600;">Terhubung ke server game!</span>';
+            GameEngine.showToast('Berhasil terhubung ke server!', 'success');
+            fetchServerLanInfo();
+            GameEngine.syncWithServer();
+            MarketEngine.refreshListings();
+          } else {
+            if (serverStatusHint) serverStatusHint.innerHTML = '⚠️ <span style="color:#ef4444;font-weight:600;">Server offline / tidak terjangkau.</span>';
+            GameEngine.showToast('Gagal terhubung ke server.', 'warn');
+          }
+        }
+      }
+
+      const btnResetServerUrl = document.getElementById('btn-reset-server-url');
+
+      if (btnSaveServerUrl && inputServerUrl) {
+        btnSaveServerUrl.addEventListener('click', () => {
+          testAndSaveServerUrl(inputServerUrl.value);
+        });
+      }
+
+      if (btnResetServerUrl && inputServerUrl) {
+        btnResetServerUrl.addEventListener('click', () => {
+          localStorage.removeItem('GAME_SERVER_URL');
+          testAndSaveServerUrl(window.DEFAULT_SERVER_URL || '');
+        });
+      }
 
       // Fetch server LAN URL
       async function fetchServerLanInfo() {
         try {
-          const res = await fetch('/api/server-info');
+          const url = window.getApiUrl ? window.getApiUrl('/api/server-info') : '/api/server-info';
+          const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
             if (data.lanUrls && data.lanUrls.length > 0 && modalLanUrl) {
               modalLanUrl.innerText = data.lanUrls[0];
             }
+            if (serverStatusHint) {
+              serverStatusHint.innerHTML = '✅ <span style="color:#10b981;font-weight:600;">Terhubung ke server game!</span>';
+            }
+          } else {
+            if (serverStatusHint) {
+              serverStatusHint.innerHTML = '⚠️ <span style="color:#ef4444;font-weight:600;">Server offline / belum terhubung.</span>';
+            }
           }
         } catch (e) {
-          // fallback
+          if (serverStatusHint) {
+            serverStatusHint.innerHTML = '⚠️ <span style="color:#ef4444;font-weight:600;">Server offline / belum terhubung.</span>';
+          }
         }
       }
       fetchServerLanInfo();
 
       function openAccountModal() {
+        updateServerStatusUI();
         if (modalAccIdDisplay) modalAccIdDisplay.innerText = GameState.player.id;
         const nameInput = document.getElementById('input-player-name');
         if (nameInput) nameInput.value = GameState.player.name || '';

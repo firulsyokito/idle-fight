@@ -347,6 +347,17 @@
           </div>
         </div>
 
+        <!-- Box Pengaturan Server Online / Lokal -->
+        <div class="account-card-box">
+          <div class="acc-id-label">🌐 Alamat Server Game (Online / LAN / Lokal):</div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
+            <input type="text" id="input-server-url" class="form-input" style="flex: 1;" placeholder="http://localhost:3000 atau https://server-anda.trycloudflare.com">
+            <button class="btn btn-primary" id="btn-save-server-url">Simpan & Cek</button>
+            <button class="btn btn-secondary" id="btn-reset-server-url" title="Kembalikan ke server default">Reset</button>
+          </div>
+          <div class="acc-hint" id="server-status-hint">Status: Menghubungkan ke server...</div>
+        </div>
+
         <!-- Box Cadangan / Transfer Save Game (Google Sites & Offline) -->
         <div class="account-card-box">
           <div class="acc-id-label">💾 Cadangan / Transfer Save Game (Google Sites & Offline):</div>
@@ -467,6 +478,7 @@
   <div id="toast-container" class="toast-container"></div>
 
   <!-- SCRIPTS MODULAR -->
+  <script src="js/config.js"></script>
   <script src="js/RenderEngine.js"></script>
   <script src="js/GameEngine.js"></script>
   <script src="js/MarketEngine.js"></script>
@@ -562,24 +574,81 @@
       const inputSwitchAccId = document.getElementById('input-switch-acc-id');
       const btnCreateNewAcc = document.getElementById('btn-create-new-acc');
       const modalLanUrl = document.getElementById('modal-lan-url');
+      const inputServerUrl = document.getElementById('input-server-url');
+      const btnSaveServerUrl = document.getElementById('btn-save-server-url');
+      const serverStatusHint = document.getElementById('server-status-hint');
+
+      function updateServerStatusUI() {
+        const currentUrl = window.getServerUrl ? window.getServerUrl() : '';
+        if (inputServerUrl) inputServerUrl.value = currentUrl;
+      }
+
+      async function testAndSaveServerUrl(newUrl) {
+        if (!newUrl || !newUrl.trim()) {
+          localStorage.removeItem('GAME_SERVER_URL');
+        } else {
+          localStorage.setItem('GAME_SERVER_URL', newUrl.trim());
+        }
+        updateServerStatusUI();
+        if (serverStatusHint) serverStatusHint.innerText = 'Sedang mengecek koneksi ke server...';
+        if (window.checkServerStatus) {
+          const res = await window.checkServerStatus(newUrl);
+          if (res.ok) {
+            if (serverStatusHint) serverStatusHint.innerHTML = '✅ <span style="color:#10b981;font-weight:600;">Terhubung ke server game!</span>';
+            GameEngine.showToast('Berhasil terhubung ke server!', 'success');
+            fetchServerLanInfo();
+            GameEngine.syncWithServer();
+            MarketEngine.refreshListings();
+          } else {
+            if (serverStatusHint) serverStatusHint.innerHTML = '⚠️ <span style="color:#ef4444;font-weight:600;">Server offline / tidak terjangkau.</span>';
+            GameEngine.showToast('Gagal terhubung ke server.', 'warn');
+          }
+        }
+      }
+
+      const btnResetServerUrl = document.getElementById('btn-reset-server-url');
+
+      if (btnSaveServerUrl && inputServerUrl) {
+        btnSaveServerUrl.addEventListener('click', () => {
+          testAndSaveServerUrl(inputServerUrl.value);
+        });
+      }
+
+      if (btnResetServerUrl && inputServerUrl) {
+        btnResetServerUrl.addEventListener('click', () => {
+          localStorage.removeItem('GAME_SERVER_URL');
+          testAndSaveServerUrl(window.DEFAULT_SERVER_URL || '');
+        });
+      }
 
       // Fetch server LAN URL
       async function fetchServerLanInfo() {
         try {
-          const res = await fetch('/api/server-info');
+          const url = window.getApiUrl ? window.getApiUrl('/api/server-info') : '/api/server-info';
+          const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
             if (data.lanUrls && data.lanUrls.length > 0 && modalLanUrl) {
               modalLanUrl.innerText = data.lanUrls[0];
             }
+            if (serverStatusHint) {
+              serverStatusHint.innerHTML = '✅ <span style="color:#10b981;font-weight:600;">Terhubung ke server game!</span>';
+            }
+          } else {
+            if (serverStatusHint) {
+              serverStatusHint.innerHTML = '⚠️ <span style="color:#ef4444;font-weight:600;">Server offline / belum terhubung.</span>';
+            }
           }
         } catch (e) {
-          // fallback
+          if (serverStatusHint) {
+            serverStatusHint.innerHTML = '⚠️ <span style="color:#ef4444;font-weight:600;">Server offline / belum terhubung.</span>';
+          }
         }
       }
       fetchServerLanInfo();
 
       function openAccountModal() {
+        updateServerStatusUI();
         if (modalAccIdDisplay) modalAccIdDisplay.innerText = GameState.player.id;
         const nameInput = document.getElementById('input-player-name');
         if (nameInput) nameInput.value = GameState.player.name || '';

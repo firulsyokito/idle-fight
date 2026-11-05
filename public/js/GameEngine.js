@@ -1658,7 +1658,8 @@ const GameEngine = {
 
   async syncWithServer() {
     try {
-      const res = await fetch(`/api/player/${GameState.player.id}`);
+      const url = window.getApiUrl ? window.getApiUrl(`/api/player/${GameState.player.id}`) : `/api/player/${GameState.player.id}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data.player) {
@@ -1707,7 +1708,8 @@ const GameEngine = {
         equipped: GameState.player.equipped,
         inventory: GameState.player.inventory
       };
-      await fetch('/api/player/save', {
+      const saveUrl = window.getApiUrl ? window.getApiUrl('/api/player/save') : '/api/player/save';
+      await fetch(saveUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -1919,9 +1921,10 @@ const GameEngine = {
 
     listEl.innerHTML = '<div class="leaderboard-loading">Memuat peringkat dari server...</div>';
 
-    // 1. Coba ambil dari server API lokal (jika node server berjalan)
+    // 1. Coba ambil dari server API lokal / online publik
     try {
-      const res = await fetch('/api/leaderboard');
+      const lbUrl = window.getApiUrl ? window.getApiUrl('/api/leaderboard') : '/api/leaderboard';
+      const res = await fetch(lbUrl);
       if (res.ok) {
         const data = await res.json();
         if (data.leaderboard && data.leaderboard.length > 0) {
@@ -2126,7 +2129,8 @@ const GameEngine = {
     }
 
     try {
-      const res = await fetch('/api/player/rename', {
+      const renameUrl = window.getApiUrl ? window.getApiUrl('/api/player/rename') : '/api/player/rename';
+      const res = await fetch(renameUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: GameState.player.id, newName: clean })
@@ -2236,9 +2240,10 @@ const GameEngine = {
     }
     const cleanId = targetId.trim();
 
-    // 1. Coba hubungi server backend (jika bermain via localhost / LAN)
+    // 1. Coba hubungi server backend (jika bermain via localhost / online publik)
     try {
-      const res = await fetch('/api/player/login', {
+      const loginUrl = window.getApiUrl ? window.getApiUrl('/api/player/login') : '/api/player/login';
+      const res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: cleanId, name: targetName })
